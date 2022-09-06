@@ -22,6 +22,10 @@ fn build_ui() -> impl Widget<()> {
 }
 
 fn main() -> Result<(), PlatformError> {
-    AppLauncher::with_window(WindowDesc::new(build_ui)).launch(())?;
+    let window = WindowDesc::new(build_ui)
+    .window_size((1000.0, 500.0))
+    .resizable(false)
+    .title("Idle Rust Game");
+    AppLauncher::with_window(window).launch(())?;
     Ok(())
 }
