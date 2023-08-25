@@ -1,1 +1,0 @@
-# rust_idle_game
