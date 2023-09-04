@@ -1,5 +1,7 @@
 use bevy::prelude::*;
+use bevy::input::common_conditions::input_toggle_active;
 use bevy_ecs_tilemap::prelude::*;
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 
 
@@ -109,6 +111,7 @@ fn main() {
             }),
             ..default()
         }).set(ImagePlugin::default_nearest()))
+        .add_plugins(WorldInspectorPlugin::default().run_if(input_toggle_active(true,KeyCode::Escape)))
         .add_plugins(TilemapPlugin)
         .add_systems(Startup, startup)
         .add_systems(Update, swap_texture_or_hide).run();
