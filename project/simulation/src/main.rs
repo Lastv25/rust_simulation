@@ -4,6 +4,12 @@ use bevy_ecs_tilemap::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 
+fn radius_concentric(x: u32, y: u32) -> (f64, f64) {
+    // Midpoint formula
+    let midpoint_x = x as f64 / 2.0;
+    let midpoint_y = y as f64 / 2.0;
+    return (midpoint_x, midpoint_y);
+}
 
 fn startup(
     mut commands: Commands,
@@ -14,9 +20,9 @@ fn startup(
 ) {
     commands.spawn(Camera2dBundle::default());
 
-    let texture_handle: Handle<Image> = asset_server.load("tiles.png");
+    let texture_handle: Handle<Image> = asset_server.load("flat_hex_tiles.png");
 
-    let map_size = TilemapSize { x: 32, y: 32 };
+    let map_size = TilemapSize { x: 10, y: 10 };
 
     // Create a tilemap entity a little early.
     // We want this entity early because we need to tell each tile which tilemap entity
@@ -33,30 +39,59 @@ fn startup(
 
     // Spawn the elements of the tilemap.
     // Alternatively, you can use helpers::filling::fill_tilemap.
-    for x in 0..map_size.x {
-        for y in 0..map_size.y {
-            let tile_pos = TilePos { x, y };
-            let tile_entity = commands
+    // for x in 0..map_size.x {
+    //     for y in 0..map_size.y {
+    //         let tile_pos = TilePos { x, y };
+    //         println!("x:{},y:{}", x,y);
+    //         let tile_entity = commands
+    //             .spawn(TileBundle {
+    //                 position: tile_pos,
+    //                 tilemap_id: TilemapId(tilemap_entity),                 
+    //                 ..Default::default()
+    //             })
+    //             .id();
+    //         tile_storage.set(&tile_pos, tile_entity);
+    //     }
+    // }
+
+    let (midpoint_x, midpoint_y) = radius_concentric(map_size.x, map_size.y);
+    println!("Midpoint: ({}, {})", midpoint_y, midpoint_y);
+    let x = midpoint_x as u32;
+    let y = midpoint_y as u32;
+    let tile_pos = TilePos { x, y };
+    let tile_entity = commands
                 .spawn(TileBundle {
                     position: tile_pos,
-                    tilemap_id: TilemapId(tilemap_entity),
+                    tilemap_id: TilemapId(tilemap_entity),                 
                     ..Default::default()
                 })
                 .id();
-            tile_storage.set(&tile_pos, tile_entity);
-        }
-    }
+    tile_storage.set(&tile_pos, tile_entity);
+
+    let x_2 = x+1;
+    let y_2 = y+1;
+    println!("New point: ({}, {})", x_2, y_2);
+
+    let tile_pos_2 = TilePos { x:x_2, y:y_2 };
+    let tile_entity_2 = commands
+                .spawn(TileBundle {
+                    position: tile_pos_2,
+                    tilemap_id: TilemapId(tile_entity),                 
+                    ..Default::default()
+                })
+                .id();
+    tile_storage.set(&tile_pos_2, tile_entity_2);
 
     let tile_size = TilemapTileSize { x: 16.0, y: 16.0 };
     let grid_size = tile_size.into();
-    let map_type = TilemapType::default();
+    let map_type = TilemapType::Hexagon(HexCoordSystem::Column);
 
     commands.entity(tilemap_entity).insert(TilemapBundle {
         grid_size,
         map_type,
         size: map_size,
         storage: tile_storage,
-        texture: TilemapTexture::Single(texture_handle),
+        texture:  TilemapTexture::Single(texture_handle),
         tile_size,
         transform: get_tilemap_center_transform(&map_size, &grid_size, &map_type, 0.0),
         ..Default::default()
@@ -74,31 +109,6 @@ fn startup(
     }
 }
 
-fn swap_texture_or_hide(
-    asset_server: Res<AssetServer>,
-    keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&mut TilemapTexture, &mut Visibility)>,
-) {
-    if keyboard_input.just_pressed(KeyCode::Space) {
-        let texture_a = TilemapTexture::Single(asset_server.load("tiles.png"));
-        let texture_b = TilemapTexture::Single(asset_server.load("tiles2.png"));
-        for (mut tilemap_tex, _) in &mut query {
-            if *tilemap_tex == texture_a {
-                *tilemap_tex = texture_b.clone();
-            } else {
-                *tilemap_tex = texture_a.clone();
-            }
-        }
-    }
-    if keyboard_input.just_pressed(KeyCode::H) {
-        for (_, mut visibility) in &mut query {
-            *visibility = match *visibility {
-                Visibility::Inherited | Visibility::Visible => Visibility::Hidden,
-                Visibility::Hidden => Visibility::Visible,
-            };
-        }
-    }
-}
 
 fn main() {
     App::new()
@@ -113,7 +123,6 @@ fn main() {
         }).set(ImagePlugin::default_nearest()))
         .add_plugins(WorldInspectorPlugin::default().run_if(input_toggle_active(true,KeyCode::Escape)))
         .add_plugins(TilemapPlugin)
-        .add_systems(Startup, startup)
-        .add_systems(Update, swap_texture_or_hide).run();
+        .add_systems(Startup, startup).run();
 }
 
