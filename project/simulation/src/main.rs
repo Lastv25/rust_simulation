@@ -58,7 +58,7 @@ fn startup(
     println!("Midpoint: ({}, {})", midpoint_y, midpoint_y);
     let x = midpoint_x as u32;
     let y = midpoint_y as u32;
-    let tile_pos = TilePos { x, y };
+    let tile_pos: TilePos = TilePos { x, y };
     let tile_entity = commands
                 .spawn(TileBundle {
                     position: tile_pos,
@@ -69,18 +69,32 @@ fn startup(
     tile_storage.set(&tile_pos, tile_entity);
 
     let x_2 = x+1;
-    let y_2 = y+1;
+    let y_2 = y;
     println!("New point: ({}, {})", x_2, y_2);
 
     let tile_pos_2 = TilePos { x:x_2, y:y_2 };
-    let tile_entity_2 = commands
+    let tile_entity_2: Entity = commands
                 .spawn(TileBundle {
                     position: tile_pos_2,
-                    tilemap_id: TilemapId(tile_entity),                 
+                    tilemap_id: TilemapId(tilemap_entity),                 
                     ..Default::default()
                 })
                 .id();
     tile_storage.set(&tile_pos_2, tile_entity_2);
+
+    let x_3 = x;
+    let y_3 = y+1;
+    println!("New point: ({}, {})", x_3, y_3);
+
+    let tile_pos_3 = TilePos { x:x_3, y:y_3 };
+    let tile_entity_3: Entity = commands
+                .spawn(TileBundle {
+                    position: tile_pos_3,
+                    tilemap_id: TilemapId(tilemap_entity),                 
+                    ..Default::default()
+                })
+                .id();
+    tile_storage.set(&tile_pos_3, tile_entity_3);
 
     let tile_size = TilemapTileSize { x: 16.0, y: 16.0 };
     let grid_size = tile_size.into();
